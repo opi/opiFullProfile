@@ -7,7 +7,6 @@ core = 7.x
 files[] = opifullprofile.profile
 
 ; core modules
-dependencies[] = aggregator
 dependencies[] = block
 dependencies[] = dblog
 dependencies[] = contact
@@ -22,9 +21,7 @@ dependencies[] = number
 dependencies[] = options
 dependencies[] = path
 dependencies[] = rdf
-dependencies[] = shortcut
 dependencies[] = taxonomy
-dependencies[] = toolbar
 
 
 ; general contrib modules
@@ -40,6 +37,7 @@ dependencies[] = wysiwyg
 
 ; admin & dev
 dependencies[] = admin_menu
+dependencies[] = admin_menu_toolbar
 dependencies[] = backup_migrate
 
 ; HTML5 Support
