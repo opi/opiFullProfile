@@ -2,6 +2,19 @@
 msgid  ""
 msgstr ""
 
+
+# Content type
+msgid  "Basic page"
+msgstr "Page basique"
+
+msgid  "Title"
+msgstr "Titre"
+
+msgid  "Body"
+msgstr "Corps"
+
+
+# Menu items
 msgid  "Home"
 msgstr "Accueil"
 
