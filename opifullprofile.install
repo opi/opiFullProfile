@@ -1,0 +1,282 @@
+<?php
+
+
+
+/**
+ * Implements hook_install().
+ *
+ * Perform actions to set up the site for this profile.
+ * Inspired from standard installation profile
+ */
+function opifullprofile_install() {
+  
+
+  /**
+   * MISC VARIABLES
+   */
+  variable_set('cron_safe_threshold', 3600);
+  
+  variable_set('admin_menu_position_fixed', TRUE);
+  variable_set('admin_menu_tweak_modules', TRUE);
+  
+  //variable_set('file_public_path', "sites/files");
+  
+  
+  /**
+   * INPUT FORMATS
+   */
+  $filtered_html_format = array(
+    'format' => 'filtered_html',
+    'name' => 'Filtered HTML',
+    'weight' => 0,
+    'filters' => array(
+      // URL filter.
+      'filter_url' => array(
+        'weight' => 0,
+        'status' => 1,
+      ),
+      // HTML filter.
+      'filter_html' => array(
+        'weight' => 1,
+        'status' => 1,
+      ),
+      // Line break filter.
+      'filter_autop' => array(
+        'weight' => 2,
+        'status' => 1,
+      ),
+      // HTML corrector filter.
+      'filter_htmlcorrector' => array(
+        'weight' => 10,
+        'status' => 1,
+      ),
+    ),
+  );
+  $filtered_html_format = (object) $filtered_html_format;
+  filter_format_save($filtered_html_format);
+
+  $full_html_format = array(
+    'format' => 'full_html',
+    'name' => 'Full HTML',
+    'weight' => 1,
+    'filters' => array(
+      // URL filter.
+      'filter_url' => array(
+        'weight' => 0,
+        'status' => 1,
+      ),
+      // Line break filter.
+      'filter_autop' => array(
+        'weight' => 1,
+        'status' => 1,
+      ),
+      // HTML corrector filter.
+      'filter_htmlcorrector' => array(
+        'weight' => 10,
+        'status' => 1,
+      ),
+    ),
+  );
+  $full_html_format = (object) $full_html_format;
+  filter_format_save($full_html_format);
+
+
+  /**
+   * WYSIWYG
+   */
+  $editor = 'tinymce';
+  $filtered_html_profile = array(
+    'default' => 1,
+    'user_choose' => 0,
+    'show_toggle' => 1,
+    'theme' => "advanced",
+    'language' => "en",
+    'buttons' => array(
+      'default' => array(
+        'bold' => 1,
+        'italic' => 1,
+        'link' => 1,
+        'unlink' => 1,
+        'removeformat' => 1,
+      ),
+      //'paste' => array('pasteword' => 1)
+    ),
+    'toolbar_loc' => "top",
+    'toolbar_align' => "left",
+    'path_loc' => "bottom",
+    'resizing' => 1,
+    'verify_html' => 1,
+    'preformatted' => 0,
+    'convert_fonts_to_spans' => 1,
+    'remove_linebreaks' => 1,
+    'apply_source_formatting' => 0,
+    'paste_auto_cleanup_on_paste' => 1,
+    'block_formats' => "p,h2,h3,h4",
+    'css_setting' => "theme",
+    'css_path' => "",
+    'css_classes' => "",
+  );
+  
+  db_merge('wysiwyg')
+    ->key(array('format' => $filtered_html_format->format)) 
+    ->fields(array(
+      'editor' => $editor, 
+      'settings' => serialize($filtered_html_profile),
+    ))
+    ->execute();
+
+  $full_html_profile = $filtered_html_profile;
+  $full_html_profile['buttons']['default'] += array(
+    'underline' => 1,
+    'bullist' => 1,
+    'numlist' => 1,
+    'outdent' => 1,
+    'indent' => 1,
+    'image' => 1,
+    'code' => 1,
+  );
+  $full_html_profile['buttons']['font'] = array('formatselect' => 1);
+  db_merge('wysiwyg')
+    ->key(array('format' => $full_html_format->format)) 
+    ->fields(array(
+      'editor' => $editor, 
+      'settings' => serialize($full_html_profile),
+    ))
+    ->execute();
+    
+  wysiwyg_profile_cache_clear();
+
+
+  /**
+   * THEMES
+   */
+  $admin_theme = 'rubik';
+  db_update('system')
+    ->fields(array('status' => 1))
+    ->condition('type', 'theme')
+    ->condition('name', 'tao')
+    ->execute();
+  db_update('system')
+    ->fields(array('status' => 1))
+    ->condition('type', 'theme')
+    ->condition('name', $admin_theme)
+    ->execute();
+  variable_set('admin_theme', $admin_theme);
+  variable_set('node_admin_theme', '1');
+
+  $default_theme = variable_get('theme_default', 'bartik');
+  
+  
+  
+  /**
+   * BLOCKS
+   */
+  $values = array(
+    // Default Theme
+    array(
+      'module' => 'system', 'delta' => 'main',
+      'theme' => $default_theme, 'region' => 'content',
+      'status' => 1, 'weight' => 0, 'pages' => '', 'cache' => DRUPAL_NO_CACHE,
+    ),
+    array(
+      'module' => 'system', 'delta' => 'help',
+      'theme' => $default_theme, 'region' => 'help',
+      'status' => 1, 'weight' => 0, 'pages' => '', 'cache' => DRUPAL_NO_CACHE,
+    ),
+    
+    // Admin theme
+    array(
+      'module' => 'system', 'delta' => 'main',
+      'theme' => $admin_theme, 'region' => 'content',
+      'status' => 1, 'weight' => 0, 'pages' => '', 'cache' => DRUPAL_NO_CACHE,
+    ),
+    array(
+      'module' => 'system', 'delta' => 'help',
+      'theme' => $admin_theme, 'region' => 'help',
+      'status' => 1, 'weight' => 0, 'pages' => '', 'cache' => DRUPAL_NO_CACHE,
+    ),
+  );
+  $query = db_insert('block')->fields(array('module', 'delta', 'theme', 'status', 'weight', 'region', 'pages', 'cache'));
+  foreach ($values as $record) {
+    $query->values($record);
+  }
+  $query->execute();
+
+
+
+  /**
+   * CONTENT TYPES
+   */
+  // Insert default pre-defined node types into the database. For a complete
+  // list of available node type attributes, refer to the node type API
+  // documentation at: http://api.drupal.org/api/HEAD/function/hook_node_info.
+  $type_page = array(
+    'type' => 'page',
+    'name' => st('Basic page'),
+    'base' => 'node_content',
+    'description' => st("Use <em>basic pages</em> for your static content, such as an 'About us' page."),
+    'custom' => 1,
+    'modified' => 1,
+    'locked' => 0,
+  );
+  $type_page = node_type_set_defaults($type_page);
+  node_type_save($type_page);
+  node_add_body_field($type_page);
+
+  // Insert default pre-defined RDF mapping into the database.
+  $rdf_mapping = array(
+    'type' => 'node',
+    'bundle' => 'page',
+    'mapping' => array(
+      'rdftype' => array('foaf:Document'),
+    ),
+  );
+  rdf_mapping_save($rdf_mapping);
+
+  // Default "Basic page" to not be promoted and have comments disabled.
+  variable_set('node_options_page', array('status'));
+  variable_set('comment_page', COMMENT_NODE_HIDDEN);
+
+  // Don't display date and author information for "Basic page" nodes by default.
+  variable_set('node_submitted_page', FALSE);
+
+
+
+  /**
+   * USERS & PERMISSIONS
+   */
+  variable_set('user_register', USER_REGISTER_ADMINISTRATORS_ONLY);
+  variable_set('user_pictures', '1');
+
+  // Enable default permissions for system roles.
+  $filtered_html_permission = filter_permission_name($filtered_html_format);
+  user_role_grant_permissions(DRUPAL_ANONYMOUS_RID, array('access content', 'access site-wide contact form', $filtered_html_permission));
+  user_role_grant_permissions(DRUPAL_AUTHENTICATED_RID, array('access content', 'access site-wide contact form', $filtered_html_permission));
+
+
+  /**
+   * MENU
+   */
+  // Create a Home link in the main menu.
+  $item = array(
+    'link_title' => st("Home"),
+    'link_path' => '<front>',
+    'menu_name' => 'main-menu',
+    'weight' => -10,
+  );
+  menu_link_save($item);
+  
+  // Create a Contact link in the main menu.
+  $item = array(
+    'link_title' => st("Contact us"),
+    'link_path' => 'contact',
+    'menu_name' => 'main-menu',
+    'weight' => 10,
+  );
+  menu_link_save($item);
+
+  // Update the menu router information.
+  menu_rebuild();
+  
+}
+

@@ -1,0 +1,11 @@
+
+msgid  ""
+msgstr ""
+
+msgid  "Home"
+msgstr "Accueil"
+
+msgid  "Contact us"
+msgstr "Contactez-nous"
+
+
