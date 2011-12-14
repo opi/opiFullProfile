@@ -19,7 +19,7 @@ function opifullprofile_install() {
   variable_set('admin_menu_position_fixed', TRUE);
   variable_set('admin_menu_tweak_modules', TRUE);
   
-  //variable_set('file_public_path', "sites/files");
+  variable_set('file_public_path', "sites/files");
   
   
   /**
